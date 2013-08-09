@@ -5,4 +5,6 @@ description: Lightweight Dart messaging server; supporting STOMP messaging proto
 homepage: https://github.com/rikulo/messa
 dependencies:
   meta: any
+  logging: any
+  rikulo_commons: any
   stomp: {path: ../stomp}
