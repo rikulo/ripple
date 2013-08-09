@@ -67,7 +67,20 @@ class _MessaServer implements MessaServer {
     return channel;
   }
   void _startChannel(MessaChannel channel) {
+    final String serverInfo = "Messa/$version";
+    channel.socket.listen((Socket socket) {
+      _serveSocket(channel, socket);
+    });
+    _channels.add(channel);
+    _logChannel(channel);
+  }
+  void _logChannel(MessaChannel channel) {
+    var address = channel.address;
+    if (address is InternetAddress)
+      address = (address as InternetAddress).address;
 
+    logger.info("Messa Server $version starting on "
+      + (address != null ? " ${address}:${channel.port}": "${channel.socket}"));
   }
 
   @override
@@ -80,6 +93,13 @@ class _MessaServer implements MessaServer {
       throw new StateError("Not running");
     for (final MessaChannel channel in new List.from(channels))
       channel.close();
+  }
+
+  void _serveSocket(MessaChannel channel, socket) {
+    final MessaConnect connect = new _MessaConnect(channel, socket);
+    connect.asStream.listen((List<int> data) {
+      print(">>receive>>${decodeUtf8(data)}");
+    });
   }
 }
 

@@ -6,6 +6,7 @@ library messa;
 import "dart:async";
 import "dart:io";
 import "dart:collection" show HashMap;
+import "dart:utf";
 import "package:meta/meta.dart";
 import "package:logging/logging.dart" show Logger;
 

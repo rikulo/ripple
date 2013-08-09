@@ -51,10 +51,16 @@ class _MessaChannel implements MessaChannel {
 /** A network connection that is used to commuincate with a client.
  */
 class _MessaConnect implements MessaConnect {
-  ///The channel that this connection belongs to.
+  @override
   final MessaChannel channel;
-  ///The server.
+  @override
   final MessaServer server;
-  _MessaConnect(MessaChannel channel):
+  @override
+  final socket;
+
+  _MessaConnect(MessaChannel channel, this.socket):
     this.channel = channel, server = channel.server;
+
+  Stream<List<int>> get asStream => socket;
+  StreamSink<List<int>> get asSink => socket;
 }

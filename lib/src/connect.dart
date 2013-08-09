@@ -48,4 +48,6 @@ abstract class MessaConnect {
   MessaChannel get channel;
   ///The server.
   MessaServer get server;
+  ///The socket. It is either a [Socket] or a [WebSocket].
+  get socket;
 }
