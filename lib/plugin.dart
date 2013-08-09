@@ -3,8 +3,37 @@
 // Author: tomyeh
 library messa_plugin;
 
+import "package:meta/meta.dart";
+import "package:logging/logging.dart";
+import "package:rikulo_commons/logging.dart";
+
 /**
- * 
+ * The destination control used to control the subscription
+ * and creation of destinations of messages.
  */
-class DestinationControl {
+abstract class DestinationControl {
+  factory DestinationControl() => new _DestinationControl();
+}
+
+/**
+ * The configurer for logging.
+ */
+abstract class LoggingConfigurer {
+  factory LoggingConfigurer() => new _LoggingConfigurer();
+
+  /** Configure the logger.
+   */
+  void configure(Logger logger);
+}
+
+class _DestinationControl implements DestinationControl {
+  
+}
+
+class _LoggingConfigurer implements LoggingConfigurer {
+  @override
+  void configure(Logger logger) {
+    Logger.root.level = Level.INFO;
+    logger.onRecord.listen(simpleLoggerHandler);
+  }
 }

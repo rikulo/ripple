@@ -3,12 +3,16 @@
 // Author: tomyeh
 part of messa;
 
-/** A channel that [StompConnect] can take place.
- * A channel can have multiple [StompConnect].
+/** A STOMP channel.
+ * A channel represents the Internet address and port that [MessaServer]
+ * is bound to.
  *
- * A channel is either a [StompIPChannel] or a [SocketChannel].
+ * A channel can serve multiple connections ([MessaConnect]).
+ * Each connection is a one-to-one network connection with a client.
+ *
+ * A channel is either a [MessaIPChannel] or a [MessaSocketChannel].
  */
-abstract class StompChannel {
+abstract class MessaChannel {
   /** When the server started. It is null if never started.
    */
   DateTime get startedSince;
@@ -23,30 +27,25 @@ abstract class StompChannel {
 
   ///The server for serving this channel.
   MessaServer get server;
-}
-/** A HTTP channel.
- */
-abstract class StompIPChannel extends StompChannel {
+
+  ///The socket that this channel is bound to.
+  ServerSocket get socket;
+
   /** The address. It can be either a [String] or an [InternetAddress].
+   * It is null if the channel is started by [MessaServer.startOn].
    */
   get address;
   ///The port.
   int get port;
-  ///Whether it is a HTTPS channel
+  ///Whether it is a secure channel
   bool get isSecure;
-}
-/** A socket channel.
- */
-abstract class StompSocketChannel extends StompChannel {
-  ///The socket that this channel is bound to.
-  ServerSocket get socket;
 }
 
 /** A stomp connection.
  */
-abstract class StompConnect {
+abstract class MessaConnect {
   ///The channel that this connection belongs to.
-  StompChannel get channel;
+  MessaChannel get channel;
   ///The server.
   MessaServer get server;
 }
