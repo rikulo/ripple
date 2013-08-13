@@ -1,12 +1,12 @@
-#Messa
+#Ripple
 
 Lightweight Dart messaging server; supporting [STOMP](http://stomp.github.io/) messaging protocol.
 
 * [Home](http://rikulo.org)
-* [API Reference](http://api.rikulo.org/messa/latest)
+* [API Reference](http://api.rikulo.org/ripple/latest)
 * [Discussion](http://stackoverflow.com/questions/tagged/rikulo)
-* [Git Repository](https://github.com/rikulo/messa)
-* [Issues](https://github.com/rikulo/messa/issues)
+* [Git Repository](https://github.com/rikulo/ripple)
+* [Issues](https://github.com/rikulo/ripple/issues)
 
 > See also [Stomp Dart Client](https://github.com/rikulo/stomp).
 
@@ -15,7 +15,7 @@ Lightweight Dart messaging server; supporting [STOMP](http://stomp.github.io/) m
 Add this to your `pubspec.yaml` (or create it):
 
     dependencies:
-      messa:
+      ripple:
 
 Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the Dart SDK):
 
@@ -25,25 +25,27 @@ Then run the [Pub Package Manager](http://pub.dartlang.org/doc) (comes with the 
 
 First, you have to import:
 
-    import "package:messa/messa.dart";
+    import "package:ripple/ripple.dart";
 
-Then, you can start Messa server by binding it to any number of Internet addresses and ports.
+Then, you can start Ripple server by binding it to any number of Internet addresses and ports.
 
-    new MesaServer()
+    new RippleServer()
       ..start() //bind to port 61626
       ..startSecure(); //bind to port 61627 and using SSL
 
+> For how to use a STOMP client to access Ripple server, please refer to [STOMP Dart Client](https://github.com/rikulo/stomp).
+
 ###WebSocket
 
-You can have Messa server to serve a WebSocket connection. For example,
+You can have Ripple server to serve a WebSocket connection. For example,
 
     HttpServer httpServer;
-    MessaServer messaServer;
+    RippleServer rippleServer;
     ...
     httpServer.listen((request) {
       if (...) { //usually test request.uri to see if it is mapped to WebSocket
         WebSocketTransformer.upgrade(request).then((WebSocket webSocket) {
-          messaServer.serveWebSocket(webSocket);
+          rippleServer.serveWebSocket(webSocket);
         });
       } else {
         // Do normal HTTP request processing.
@@ -54,4 +56,13 @@ You can have Messa server to serve a WebSocket connection. For example,
 
 * Support STOMP 1.2 or above
 * Support UTF-8 encoding
-* No transaction support
+
+##Incompleteness
+
+* Transaction not supported.
+* Heart beat not supported.
+* ACK and NACK not supported.
+
+##Potential Enhancement
+
+* Support subscribeBlob() better. Currently, messages sent to subscriber will be all cached in the memory. It could be an issue if the message is huge.

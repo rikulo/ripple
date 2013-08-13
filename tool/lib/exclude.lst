@@ -12,3 +12,6 @@ rikulo_mirrors
 rikulo_util
 rikulo_browser
 rikulo_logging
+stomp
+stomp_impl_plugin
+stomp_impl_util

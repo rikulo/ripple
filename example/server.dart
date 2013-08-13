@@ -3,11 +3,11 @@
 // Author: tomyeh
 library example_server;
 
-import "package:messa/messa.dart";
+import "package:ripple/ripple.dart";
 
 /**
  * Demostration how to start a server.
  */
 void main() {
-  new MessaServer().start();
+  new RippleServer().start();
 }
