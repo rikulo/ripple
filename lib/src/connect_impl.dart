@@ -10,6 +10,9 @@ class _RippleChannel implements RippleChannel {
   @override
   final DateTime startedSince;
 
+  @override
+  bool get isWebSocket => socket == null;
+
   bool _closed = false;
 
   _RippleChannel(this.server, ServerSocket socket, [this.address, int port,
@@ -17,6 +20,9 @@ class _RippleChannel implements RippleChannel {
       this.socket = socket,
       this.port = port != null ? port: socket.port,
       this.isSecure = isSecure != null ? isSecure: socket is SecureServerSocket;
+
+  _RippleChannel.webSocket(this.server): startedSince = new DateTime.now(),
+      socket = null, address = null, port = 0, isSecure = false;
 
   @override
   Future close() {
@@ -33,7 +39,7 @@ class _RippleChannel implements RippleChannel {
       connect._connector.close();
 
     return address != null ? socket.close(): new Future.value();
-      //don't close startOn
+      //don't close startOn and serveWebSocket
   }
   @override
   bool get isClosed => _closed;
@@ -68,12 +74,15 @@ class _RippleConnect implements RippleConnect {
   _RippleConnect(RippleChannel channel, this.socket):
       this.channel = channel {
     channel.connections.add(this);
-    _connector = new _SocketStompConnector(socket);
+    _connector = socket is WebSocket ? new _WebSocketStompConnector(socket):
+        new _SocketStompConnector(socket);
     _init();
   }
   void _init() {
     if (server.logger.isLoggable(Level.FINEST))
-      server.logger.finest("Connection ${_connector.hashCode} established (total ${channel.connections.length})");
+      server.logger.finest("Connection ${_connector.hashCode} "
+        + (socket is WebSocket ? "(WebSocket) ": "")
+        + "established (total ${channel.connections.length})");
 
     _parser = new FrameParser((Frame frame) {
       if (server.logger.isLoggable(Level.FINEST))
@@ -91,6 +100,9 @@ class _RippleConnect implements RippleConnect {
       ..onBytes = (List<int> data) {
         _parser.addBytes(data);
       }
+      ..onString = (String string) {
+        _parser.addString(string);
+      }
       ..onError = (error, stackTrace) {
         _handleErr(error, stackTrace);
       }
@@ -99,6 +111,7 @@ class _RippleConnect implements RippleConnect {
           server.logger.fine("Disconnected ${_connector.hashCode}");
 
         channel.connections.remove(this);
+        server._channels.remove(channel);
         for (final _Subscriber sub in _subscribers.values)
           _unsubscribe0(sub);
         _subscribers.clear();

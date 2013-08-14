@@ -98,7 +98,9 @@ class _RippleServer implements RippleServer {
 
   @override
   RippleConnect serveWebSocket(WebSocket socket) {
-    //TODO
+    final _RippleChannel channel = new _RippleChannel.webSocket(this);
+    _channels.add(channel);
+    return new _RippleConnect(channel, socket);
   }
   @override
   Future stop() {

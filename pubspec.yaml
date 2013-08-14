@@ -7,4 +7,4 @@ dependencies:
   meta: any
   logging: any
   rikulo_commons: any
-  stomp: {path: ../stomp}
+  stomp: any

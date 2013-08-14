@@ -3,33 +3,66 @@
 // Author: tomyeh
 part of ripple;
 
-/** The implementation on top of [socket].
+/** The implementation on top of [Socket].
  */
 class _SocketStompConnector extends BytesStompConnector {
-  final _socket; //either Socket or WebSocket (dart:io)
+  final Socket _socket;
 
-  _SocketStompConnector(this._socket);
+  _SocketStompConnector(this._socket) {
+    _init();
+  }
+  void _init() {
+    _socket.listen((List<int> data) {
+      if (data != null && !data.isEmpty)
+        onBytes(data);
+    }, onError: (error) {
+      onError(error, getAttachedStackTrace(error));
+    }, onDone: () {
+      onClose();
+    });
+  }
 
   @override
   Future close() {
-    if (_socket is WebSocket) //dart:io's WebSocket also returns Future
-      return _socket.close();
-
     _socket.destroy();
     return new Future.value();
   }
 
   @override
-  void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone()) {
-    (_socket as Stream<List<int>>).listen(onData, onError: onError, onDone: onDone);
-  }
-  @override
   void writeBytes_(List<int> bytes) {
-    (_socket as StreamSink<List<int>>).add(bytes);
+    _socket.add(bytes);
   }
   @override
   Future writeStream_(Stream<List<int>> stream)
-  => (_socket as StreamSink<List<int>>).addStream(stream);
+  => _socket.addStream(stream);
+}
+
+/** The implementation on top of [WebSocket].
+ */
+class _WebSocketStompConnector extends StringStompConnector {
+  final WebSocket _socket; //(dart:io)
+
+  _WebSocketStompConnector(this._socket) {
+    _init();
+  }
+  void _init() {
+    _socket.listen((data) {
+      //the client might send String or bytes
+      if (data is String) onString(data);
+      else onBytes(data);
+    }, onError: (error) {
+      onError(error, getAttachedStackTrace(error));
+    }, onDone: () {
+      onClose();
+    });
+  }
+
+  @override
+  void writeString_(String string) {
+    _socket.add(string);
+  }
+  @override
+  Future close() => _socket.close();
 }
 
 ///A subscriber (of a [_RippleConnect]).

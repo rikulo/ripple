@@ -7,7 +7,7 @@ import "package:logging/logging.dart";
 import "package:ripple/ripple.dart";
 
 /**
- * Demostration how to start a server.
+ * Demostration how to start a server (serving IP).
  */
 void main() {
   hierarchicalLoggingEnabled = true; //for debugging

@@ -65,4 +65,4 @@ You can have Ripple server to serve a WebSocket connection. For example,
 
 ##Potential Enhancement
 
-* Support subscribeBlob() better. Currently, messages sent to subscriber will be all cached in the memory. It could be an issue if the message is huge.
+* Support subscribeBlob() better. Currently, messages will be held in the memory before sending to subscribers. It could be an issue if the message is huge.

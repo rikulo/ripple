@@ -26,17 +26,33 @@ abstract class RippleChannel {
   ///The server for serving this channel.
   RippleServer get server;
 
-  ///The socket that this channel is bound to.
+  /** The socket that this channel is bound to.
+   *
+   * It is null if it is for serving [WebSocket] (i.e., [isWebSocket]
+   * is true).
+   */
   ServerSocket get socket;
 
   /** The address. It can be either a [String] or an [InternetAddress].
-   * It is null if the channel is started by [RippleServer.startOn].
+   *
+   * It is null if this channel is started by [RippleServer.startOn]
+   * or [isWebSocket] is true.
    */
   get address;
-  ///The port.
+  /** The port.
+   *
+   * It is meaningless if [isWebSocket] is true.
+   */
   int get port;
-  ///Whether it is a secure channel
+  /** Whether it is a secure channel.
+   *
+   * It is meaningless if [isWebSocket] is true.
+   */
   bool get isSecure;
+  /** Whether it is a WebSocket channel, i.e., caused by
+   * [RippleServer.serveWebSocket].
+   */
+  bool get isWebSocket;
 
   ///A list of connections that are connected to clients.
   List<RippleConnect> get connections;
