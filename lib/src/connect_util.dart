@@ -6,9 +6,18 @@ part of ripple;
 /** The implementation on top of [socket].
  */
 class _SocketStompConnector extends BytesStompConnector {
-  final _socket;
+  final _socket; //either Socket or WebSocket (dart:io)
 
   _SocketStompConnector(this._socket);
+
+  @override
+  Future close() {
+    if (_socket is WebSocket) //dart:io's WebSocket also returns Future
+      return _socket.close();
+
+    _socket.destroy();
+    return new Future.value();
+  }
 
   @override
   void listenBytes_(void onData(List<int> bytes), void onError(error), void onDone()) {

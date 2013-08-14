@@ -3,7 +3,7 @@
 // Author: tomyeh
 part of ripple;
 
-typedef void _ConnectErrorCallback(RippleConnect connect, err, [stackTrace]);
+typedef bool _ConnectErrorCallback(RippleConnect connect, error, [stackTrace]);
 
 /**
  * The implementation.
@@ -31,9 +31,19 @@ class _RippleServer implements RippleServer {
   }
 
   @override
-  void onError(void onError(RippleConnect connect, err, [stackTrace])) {
+  void onError(bool onError(RippleConnect connect, error, [stackTrace])) {
     _onError = onError;
   }
+  ///Returns whether to report the error to the client.
+  bool _handleErr(RippleConnect connect, error, [stackTrace]) {
+    if (_onError != null)
+      return _onError(connect, error, stackTrace);
+
+    if (stackTrace != null)
+      logger.shout("$error\n$stackTrace");
+    return true; //report to the client
+  }
+
   @override
   bool get isRunning => !_channels.isEmpty;
   @override
@@ -91,10 +101,13 @@ class _RippleServer implements RippleServer {
     //TODO
   }
   @override
-  void stop() {
+  Future stop() {
     if (!isRunning)
       throw new StateError("Not running");
+
+    final List<Future> waits = [];
     for (final RippleChannel channel in new List.from(channels))
-      channel.close();
+      waits.add(channel.close());
+    return Future.wait(waits);
   }
 }

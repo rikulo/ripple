@@ -19,7 +19,7 @@ class _RippleChannel implements RippleChannel {
       this.isSecure = isSecure != null ? isSecure: socket is SecureServerSocket;
 
   @override
-  void close() {
+  Future close() {
     _closed = true;
 
     final List<RippleChannel> channels = server.channels;
@@ -29,11 +29,11 @@ class _RippleChannel implements RippleChannel {
         break;
       }
 
-    //TODO: clean up connection
+    for (final _RippleConnect connect in new List.from(connections))
+      connect._connector.close();
 
-    if (address != null) { //not startOn
-      socket.close();
-    }
+    return address != null ? socket.close(): new Future.value();
+      //don't close startOn
   }
   @override
   bool get isClosed => _closed;
@@ -72,13 +72,18 @@ class _RippleConnect implements RippleConnect {
     _init();
   }
   void _init() {
+    if (server.logger.isLoggable(Level.FINEST))
+      server.logger.finest("Connection ${_connector.hashCode} established (total ${channel.connections.length})");
+
     _parser = new FrameParser((Frame frame) {
-print(">>from client:${frame.command}:${frame.headers}:${frame.message}");
+      if (server.logger.isLoggable(Level.FINEST))
+        server.logger.finest("Receive: ${frame.command}/${frame.headers}/${frame.message}");
+
       final _FrameHandler handler = _frameHandlers[frame.command];
       if (handler != null)
         handler(this, frame);
       else
-        _replyError("Unknown command: ${frame.command}");
+        _replyError("unknown command", "Unknown command: ${frame.command}");
     }, (error, stackTrace) {
       _handleErr(error, stackTrace);
     });
@@ -90,37 +95,75 @@ print(">>from client:${frame.command}:${frame.headers}:${frame.message}");
         _handleErr(error, stackTrace);
       }
       ..onClose = () {
-        //TODO
+        if (server.logger.isLoggable(Level.FINE))
+          server.logger.fine("Disconnected ${_connector.hashCode}");
+
+        channel.connections.remove(this);
+        for (final _Subscriber sub in _subscribers.values)
+          _unsubscribe0(sub);
+        _subscribers.clear();
       };
   }
-  void _replyError(String message) {
-    writeDataFrame(_connector, ERROR, null, message);
+  void _replyError(String message, String detail,
+      {String subscription, String destination, String messageID}) {
+    final Map<String, String> headers = new LinkedHashMap();
+    headers["message"] = message;
+    if (subscription != null)
+      headers["subscription"] = subscription;
+    if (destination != null)
+      headers["destination"] = destination;
+    if (messageID != null)
+      headers["messageID"] = messageID;
+    writeDataFrame(_connector, ERROR, headers, detail);
   }
   void _handleErr(error, [stackTrace]) {
-    if (stackTrace != null)
-      server.logger.shout("$error\n$stackTrace");
-    _replyError("$error");
+    if (server._handleErr(this, error, stackTrace))
+      _replyError("$error", stackTrace != null ? "$error\n$stackTrace": null);
+  }
+  void _replyReceipt(Map<String, String> headers) {
+    if (headers != null) {
+      final String receipt = headers["receipt"];
+      if (receipt != null) {
+        writeSimpleFrame(_connector, RECEIPT, {"receipt-id": receipt});
+      }
+    }
   }
 
   //Frame Handlers//
   void _connect(Frame frame) {
+    if (server.logger.isLoggable(Level.FINE))
+      server.logger.fine("Connected ${_connector.hashCode}");
+
     //TODO: check accept-version, host, login, passcode and heart-beat
-    //TODO: generate session
     final Map<String, String> headers = {
       "version": "1.2",
-      "server": "Ripple/${server.version}"
+      "server": "Ripple/${server.version}",
+      "session": "${_connector.hashCode}"
     };
     writeSimpleFrame(_connector, CONNECTED, headers);
+  }
+  void _disconnect(Frame frame) {
+    _replyReceipt(frame.headers);
+
+    //wait a moment, so the client has the chance to receive the receipt
+    new Future.delayed(const Duration(milliseconds: 50), () {
+      _connector.close();
+    });
   }
 
   void _subscribe(Frame frame) {
     final Map<String, String> headers = frame.headers;
+    String id, destination;
     if (headers != null) {
-      final String id = headers["id"],
-        destination = headers["destination"];
+      id = headers["id"];
+      destination = headers["destination"];
       if (id != null && destination != null) {
+        if (server.logger.isLoggable(Level.FINE))
+          server.logger.fine("Subscribe: $id, $destination");
+
         if (_subscribers[id] != null) {
-          _replyError("Subscription $id can't be subscribed twice");
+          _replyError("subscribe failed", "Subscription $id can't be subscribed twice",
+            subscription: id, destination: destination);
           return;
         }
 
@@ -132,10 +175,13 @@ print(">>from client:${frame.command}:${frame.headers}:${frame.message}");
         if (subs == null)
           subs = subsOfDest[destination] = new LinkedHashSet();
         subs.add(sub);
+
+        _replyReceipt(frame.headers);
         return;
       }
     }
-    _replyError("Both id and destination are required");
+    _replyError("subscribe failed", "Both id and destination are required",
+      subscription: id, destination: destination);
   }
   void _unsubscribe(Frame frame) {
     final Map<String, String> headers = frame.headers;
@@ -143,23 +189,31 @@ print(">>from client:${frame.command}:${frame.headers}:${frame.message}");
       final String id = headers["id"];
       if (id != null) {
         final _Subscriber sub = _subscribers.remove(id);
-        if (sub != null) {
-          final String destination = sub.destination;
-          final Set<_Subscriber> subs = server._subsOfDest[destination];
-          subs.remove(sub);
-          if (subs.isEmpty)
-            server._subsOfDest.remove(destination);
-        }
+        if (sub != null)
+          _unsubscribe0(sub);
+
+        _replyReceipt(frame.headers);
         return;
       }
     }
-    _replyError("id is required");
+    _replyError("unsubscribe failed", "id is required");
+  }
+  void _unsubscribe0(_Subscriber sub) {
+    if (server.logger.isLoggable(Level.FINE))
+      server.logger.fine("Unsubscribe: ${sub.id}, ${sub.destination}");
+
+    final String destination = sub.destination;
+    final Set<_Subscriber> subs = server._subsOfDest[destination];
+    subs.remove(sub);
+    if (subs.isEmpty)
+      server._subsOfDest.remove(destination);
   }
 
   void _send(Frame frame) {
     final Map<String, String> headers = frame.headers;
+    String destination;
     if (headers != null) {
-      final String destination = headers["destination"];
+      String destination = headers["destination"];
       if (destination != null) {
         //TODO: handle transaction
         final Set<_Subscriber> subs = server._subsOfDest[destination];
@@ -173,10 +227,12 @@ print(">>from client:${frame.command}:${frame.headers}:${frame.message}");
           }
           server._messageID = (server._messageID + 1) & 0x3fffffff;
         }
+
+        _replyReceipt(frame.headers);
         return;
       }
     }
-    _replyError("destination is required");
+    _replyError("send failed", "destination is required", destination: destination);
   }
 }
 
@@ -184,6 +240,9 @@ typedef void _FrameHandler(_RippleConnect connect, Frame frame);
 final Map<String, _FrameHandler> _frameHandlers = {
   "CONNECT": _connect,
   "STOMP": _connect,
+  "DISCONNECT": (_RippleConnect connect, Frame frame) {
+    connect._disconnect(frame);
+  },
 
   "SUBSCRIBE": (_RippleConnect connect, Frame frame) {
     connect._subscribe(frame);

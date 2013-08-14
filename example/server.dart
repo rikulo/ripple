@@ -3,11 +3,16 @@
 // Author: tomyeh
 library example_server;
 
+import "package:logging/logging.dart";
 import "package:ripple/ripple.dart";
 
 /**
  * Demostration how to start a server.
  */
 void main() {
-  new RippleServer().start();
+  hierarchicalLoggingEnabled = true; //for debugging
+
+  new RippleServer()
+    ..logger.level = Level.FINEST //for debugging
+    ..start();
 }

@@ -18,7 +18,7 @@ abstract class RippleChannel {
    *
    * To start all channels, please use [RippleServer.stop] instead.
    */
-  void close();
+  Future close();
   /** Indicates whether the channel is closed.
    */
   bool get isClosed;

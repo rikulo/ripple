@@ -5,9 +5,9 @@ library ripple;
 
 import "dart:async";
 import "dart:io";
-import "dart:collection" show HashMap, LinkedHashSet;
+import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
 import "package:meta/meta.dart";
-import "package:logging/logging.dart" show Logger;
+import "package:logging/logging.dart" show Logger, Level;
 
 import "package:stomp/stomp.dart" show Ack, AUTO, CLIENT, CLIENT_INDIVIDUAL;
 import "package:stomp/impl/util.dart";
@@ -91,16 +91,22 @@ abstract class RippleServer {
   /** Stops the server. It will close all [channels].
    *
    * To close an individual channel, please use [RippleChannel.close] instead.
+   *
+   * The returned [Future] instance indicates when it is fully stopped.
    */
-  void stop();
+  Future stop();
 
   /** The application-specific error handler to listen all errors that
    * ever happen in this server.
    *
    * If the [connect] argument is null, it means it is a server error.
    * If not null, it means it happens when communicating with a client.
+   *
+   * The return value of the error handler indicates whether to report
+   * the error back to the client (in the form of the ERROR frame).
+   * If true or null, it will be reported to the client.
    */
-  void onError(void onError(RippleConnect connect, error, [stackTrace]));
+  void onError(bool onError(RippleConnect connect, error, [stackTrace]));
 
   /** The logger for logging information.
    * The default level is `INFO`.
