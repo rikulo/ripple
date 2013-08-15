@@ -75,7 +75,7 @@ class _RippleConnect implements RippleConnect {
       this.channel = channel {
     channel.connections.add(this);
     _connector = socket is WebSocket ? new _WebSocketStompConnector(socket):
-        new _SocketStompConnector(socket);
+        new SocketStompConnector(socket);
     _init();
   }
   void _init() {

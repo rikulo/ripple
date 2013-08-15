@@ -3,40 +3,6 @@
 // Author: tomyeh
 part of ripple;
 
-/** The implementation on top of [Socket].
- */
-class _SocketStompConnector extends BytesStompConnector {
-  final Socket _socket;
-
-  _SocketStompConnector(this._socket) {
-    _init();
-  }
-  void _init() {
-    _socket.listen((List<int> data) {
-      if (data != null && !data.isEmpty)
-        onBytes(data);
-    }, onError: (error) {
-      onError(error, getAttachedStackTrace(error));
-    }, onDone: () {
-      onClose();
-    });
-  }
-
-  @override
-  Future close() {
-    _socket.destroy();
-    return new Future.value();
-  }
-
-  @override
-  void writeBytes_(List<int> bytes) {
-    _socket.add(bytes);
-  }
-  @override
-  Future writeStream_(Stream<List<int>> stream)
-  => _socket.addStream(stream);
-}
-
 /** The implementation on top of [WebSocket].
  */
 class _WebSocketStompConnector extends StringStompConnector {

@@ -12,6 +12,7 @@ import "package:logging/logging.dart" show Logger, Level;
 import "package:stomp/stomp.dart" show Ack, AUTO, CLIENT, CLIENT_INDIVIDUAL;
 import "package:stomp/impl/util.dart";
 import "package:stomp/impl/plugin.dart";
+import "package:stomp/impl/plugin_vm.dart" show SocketStompConnector;
 import "plugin.dart";
 
 part "src/server_impl.dart";
