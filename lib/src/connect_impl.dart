@@ -63,6 +63,7 @@ class _RippleConnect implements RippleConnect {
   StompConnector _connector;
   ///<String id, subscriber>
   final Map<String, _Subscriber> _subscribers = new HashMap();
+  var _user;
 
   @override
   final RippleChannel channel;
@@ -70,6 +71,8 @@ class _RippleConnect implements RippleConnect {
   _RippleServer get server => channel.server;
   @override
   final socket;
+  @override
+  get user => _user;
 
   _RippleConnect(RippleChannel channel, this.socket):
       this.channel = channel {
@@ -115,6 +118,9 @@ class _RippleConnect implements RippleConnect {
         for (final _Subscriber sub in _subscribers.values)
           _unsubscribe0(sub);
         _subscribers.clear();
+
+        if (server.authenticator != null)
+          server.authenticator.logout(this);
       };
   }
   void _replyError(String message, String detail,
@@ -142,12 +148,45 @@ class _RippleConnect implements RippleConnect {
     }
   }
 
+  bool _canAccess(String destination, String command) {
+    if (server.accessControl != null
+    && !server.accessControl.canAccess(this, destination, command)) {
+      _replyError("Access denied", "You have no right to $command $destination");
+      return false;
+    }
+    return true;
+  }
+
   //Frame Handlers//
   void _connect(Frame frame) {
     if (server.logger.isLoggable(Level.FINE))
       server.logger.fine("Connected ${_connector.hashCode}");
 
-    //TODO: check accept-version, host, login, passcode and heart-beat
+    //TODO: check accept-version and heart-beat
+    Map<String, String> headers = frame.headers;
+
+    if (server.authenticator == null) {
+      _connect0();
+      return;
+    }
+
+    if (headers == null)
+      headers = const {};
+    server.authenticator
+    .login(this, headers["host"], headers["login"], headers["passcode"])
+    .then((user) {
+      this._user = user;
+      _connect0();
+    })
+    .catchError((ex) {
+      if (ex is AuthenticationException)
+        _replyError("Authentication failed", ex.message);
+      else
+        _handleErr(ex, getAttachedStackTrace(ex));
+      _disconnect0();
+    });
+  }
+  void _connect0() {
     final Map<String, String> headers = {
       "version": "1.2",
       "server": "Ripple/${server.version}",
@@ -155,9 +194,12 @@ class _RippleConnect implements RippleConnect {
     };
     writeSimpleFrame(_connector, CONNECTED, headers);
   }
+
   void _disconnect(Frame frame) {
     _replyReceipt(frame.headers);
-
+    _disconnect0();
+  }
+  void _disconnect0() {
     //wait a moment, so the client has the chance to receive the receipt
     new Future.delayed(const Duration(milliseconds: 50), () {
       _connector.close();
@@ -179,6 +221,9 @@ class _RippleConnect implements RippleConnect {
             subscription: id, destination: destination);
           return;
         }
+
+        if (!_canAccess(destination, SUBSCRIBE))
+          return;
 
         final _Subscriber sub = _subscribers[id]
           = new _Subscriber(this, id, destination, _getAck(headers));
@@ -228,6 +273,9 @@ class _RippleConnect implements RippleConnect {
     if (headers != null) {
       String destination = headers["destination"];
       if (destination != null) {
+        if (!_canAccess(destination, SEND))
+          return;
+
         //TODO: handle transaction
         final Set<_Subscriber> subs = server._subsOfDest[destination];
         if (subs != null) {

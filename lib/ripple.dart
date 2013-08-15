@@ -26,15 +26,17 @@ part "src/connect_util.dart";
 abstract class RippleServer {
  /** Constructor.
   *
-  * * [destinationControl] - controls how to handle the subscription
-  * of destionations, such as authentication.
-  * If not specified, the destination will be created
+  * * [authenticator] - authenticates who can access this server. If omitted,
+  * there is no protection at all.
+  * * [accessControl] - controls whether a destination can be accessed,
+  * and how(send or subscribe).
+  * If omitted, the destination will be created
   * automatically if there is a client subscribed it. It is removed
   * automatically when all clients unscribed
   */
-  factory RippleServer({DestinationControl destinationControl,
+  factory RippleServer({Authenticator authenticator, AccessControl accessControl,
     LoggingConfigurer loggingConfigurer})
-  => new _RippleServer(destinationControl, loggingConfigurer);
+  => new _RippleServer(authenticator, accessControl, loggingConfigurer);
 
   /** The version.
    */
@@ -122,4 +124,13 @@ abstract class RippleServer {
    * invoke [stop] to stop the server.
    */
   List<RippleChannel> get channels;
+
+  /** The authenticator of this server.
+   * If null, it means any one can connect to this server.
+   */
+  Authenticator authenticator;
+  /** The access control of this server.
+   * If null, it means any one can access any destination of this server.
+   */
+  AccessControl accessControl;
 }

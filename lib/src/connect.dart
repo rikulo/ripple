@@ -67,4 +67,7 @@ abstract class RippleConnect {
   RippleServer get server;
   ///The socket. It is either a [Socket] or a [WebSocket].
   get socket;
+  ///The user that was returned by [Authenticator], or null
+  ///there is no authenticator for this server.
+  get user;
 }

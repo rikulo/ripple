@@ -13,8 +13,11 @@ class _RippleServer implements RippleServer {
   final String version = "0.5.0";
   @override
   final Logger logger;
+  @override
+  Authenticator authenticator;
+  @override
+  AccessControl accessControl;
 
-  final DestinationControl _destinationControl;
   final List<RippleChannel> _channels = [];
   _ConnectErrorCallback _onError;
 
@@ -22,10 +25,8 @@ class _RippleServer implements RippleServer {
   final Map<String, Set<_Subscriber>> _subsOfDest = new HashMap();
   int _messageID = 0;
 
-  _RippleServer(DestinationControl destinationControl,
-    LoggingConfigurer loggingConfigurer): logger = new Logger("ripple"),
-    _destinationControl = destinationControl != null ?
-      destinationControl: new DestinationControl() {
+  _RippleServer(this.authenticator, this.accessControl,
+    LoggingConfigurer loggingConfigurer): logger = new Logger("ripple") {
     (loggingConfigurer != null ? loggingConfigurer: new LoggingConfigurer())
       .configure(logger);
   }

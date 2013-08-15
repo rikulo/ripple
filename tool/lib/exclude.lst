@@ -14,4 +14,5 @@ rikulo_browser
 rikulo_logging
 stomp
 stomp_impl_plugin
+stomp_impl_plugin_vm
 stomp_impl_util
