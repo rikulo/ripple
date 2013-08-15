@@ -10,6 +10,8 @@ Lightweight Dart messaging server; supporting [STOMP](http://stomp.github.io/) m
 
 > See also [Stomp Dart Client](https://github.com/rikulo/stomp).
 
+[![Build Status](https://drone.io/github.com/rikulo/ripple/status.png)](https://drone.io/github.com/rikulo/ripple/latest)
+
 ##Installation
 
 Add this to your `pubspec.yaml` (or create it):
