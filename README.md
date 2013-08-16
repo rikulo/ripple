@@ -48,6 +48,8 @@ You can have Ripple server to serve a WebSocket connection. For example,
       if (...) { //usually test request.uri to see if it is mapped to WebSocket
         WebSocketTransformer.upgrade(request).then((WebSocket webSocket) {
           rippleServer.serveWebSocket(webSocket);
+        }).catchError((ex) {
+          // Handle error
         });
       } else {
         // Do normal HTTP request processing.
