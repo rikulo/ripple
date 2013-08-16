@@ -21,6 +21,8 @@ void main() {
     httpServer.listen((request) {
       WebSocketTransformer.upgrade(request).then((WebSocket webSocket) {
         rippleServer.serveWebSocket(webSocket);
+      }).catchError((ex) {
+        print("$ex");
       });
     });
   });
