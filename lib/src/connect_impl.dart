@@ -299,20 +299,20 @@ class _RippleConnect implements RippleConnect {
 
 typedef void _FrameHandler(_RippleConnect connect, Frame frame);
 final Map<String, _FrameHandler> _frameHandlers = {
-  "CONNECT": _connect,
-  "STOMP": _connect,
-  "DISCONNECT": (_RippleConnect connect, Frame frame) {
+  CONNECT: _connect,
+  STOMP: _connect,
+  DISCONNECT: (_RippleConnect connect, Frame frame) {
     connect._disconnect(frame);
   },
 
-  "SUBSCRIBE": (_RippleConnect connect, Frame frame) {
+  SUBSCRIBE: (_RippleConnect connect, Frame frame) {
     connect._subscribe(frame);
   },
-  "UNSUBSCRIBE": (_RippleConnect connect, Frame frame) {
+  UNSUBSCRIBE: (_RippleConnect connect, Frame frame) {
     connect._unsubscribe(frame);
   },
 
-  "SEND": (_RippleConnect connect, Frame frame) {
+  SEND: (_RippleConnect connect, Frame frame) {
     connect._send(frame);
   }
 };
