@@ -4,7 +4,6 @@
 library ripple_plugin;
 
 import "dart:async" show Future;
-import "package:meta/meta.dart";
 import "package:logging/logging.dart";
 import "package:rikulo_commons/logging.dart";
 

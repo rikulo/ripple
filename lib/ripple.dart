@@ -6,7 +6,6 @@ library ripple;
 import "dart:async";
 import "dart:io";
 import "dart:collection" show HashMap, LinkedHashMap, LinkedHashSet;
-import "package:meta/meta.dart";
 import "package:logging/logging.dart" show Logger, Level;
 
 import "package:stomp/stomp.dart" show Ack, AUTO, CLIENT, CLIENT_INDIVIDUAL;

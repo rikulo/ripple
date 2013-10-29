@@ -1,11 +1,12 @@
 name: ripple
-version: 0.5.1
+version: 0.5.2
 author: Tom Yeh <tomyeh@rikulo.org>
 description: Lightweight Dart messaging server; supporting STOMP messaging protocol.
 homepage: https://github.com/rikulo/ripple
 documentation: http://api.rikulo.org/ripple/latest
 dependencies:
-  meta: any
   logging: any
   rikulo_commons: any
   stomp: any
+environment:
+  sdk: ">=0.8.7"
