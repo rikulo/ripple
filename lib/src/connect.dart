@@ -27,11 +27,12 @@ abstract class RippleChannel {
   RippleServer get server;
 
   /** The socket that this channel is bound to.
+   * It is an instance of [WebSocket] or [SecureWebSocket], or null.
    *
    * It is null if it is for serving [WebSocket] (i.e., [isWebSocket]
    * is true).
    */
-  ServerSocket get socket;
+  get socket;
 
   /** The address. It can be either a [String] or an [InternetAddress].
    *

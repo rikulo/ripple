@@ -16,8 +16,8 @@ class _WebSocketStompConnector extends StringStompConnector {
       //the client might send String or bytes
       if (data is String) onString(data);
       else onBytes(data);
-    }, onError: (error) {
-      onError(error, getAttachedStackTrace(error));
+    }, onError: (error, stackTrace) {
+      onError(error, stackTrace);
     }, onDone: () {
       onClose();
     });

@@ -15,7 +15,7 @@ class _RippleChannel implements RippleChannel {
 
   bool _closed = false;
 
-  _RippleChannel(this.server, ServerSocket socket, [this.address, int port,
+  _RippleChannel(this.server, socket, [this.address, int port,
       bool isSecure]): startedSince = new DateTime.now(),
       this.socket = socket,
       this.port = port != null ? port: socket.port,
@@ -38,14 +38,14 @@ class _RippleChannel implements RippleChannel {
     for (final _RippleConnect connect in new List.from(connections))
       connect._connector.close();
 
-    return address != null ? socket.close(): new Future.value();
+    return address != null && socket != null ? socket.close(): new Future.value();
       //don't close startOn and serveWebSocket
   }
   @override
   bool get isClosed => _closed;
 
   @override
-  final ServerSocket socket;
+  final socket;
   @override
   final address;
   @override
@@ -178,11 +178,11 @@ class _RippleConnect implements RippleConnect {
       this._user = user;
       _connect0();
     })
-    .catchError((ex) {
+    .catchError((ex, stackTrace) {
       if (ex is AuthenticationException)
         _replyError("Authentication failed", ex.message);
       else
-        _handleErr(ex, getAttachedStackTrace(ex));
+        _handleErr(ex, stackTrace);
       _disconnect0();
     });
   }
